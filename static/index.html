@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OpenTrace</title>
+  <style>
+    :root {
+      --bg:      #0f1117;
+      --surface: #1a1d27;
+      --border:  #2a2d3e;
+      --accent:  #4f8ef7;
+      --accent2: #27ae60;
+      --warn:    #e74c3c;
+      --text:    #e8eaf0;
+      --muted:   #6b7280;
+      --radius:  10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+    header { display: flex; align-items: center; gap: 12px; padding: 14px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+    .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .logo span { color: var(--accent); }
+    .version { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    header .spacer { flex: 1; }
+    .status-pill { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: #1e3a2a; color: var(--accent2); border: 1px solid #2d5a3d; }
+
+    .app { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 53px); }
+
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+    .sidebar-section { padding: 16px; border-bottom: 1px solid var(--border); }
+    .sidebar-section h3 { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: opacity .15s, transform .1s; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary   { background: var(--accent);  color: white; }
+    .btn-success   { background: var(--accent2); color: white; }
+    .btn-secondary { background: var(--border);  color: var(--text); }
+    .btn-outline   { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    .btn + .btn { margin-top: 8px; }
+
+    .camera-wrap { position: relative; background: #000; border-radius: var(--radius); overflow: hidden; aspect-ratio: 4/3; }
+    #videoEl { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .camera-hint { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-size: 11px; color: rgba(255,255,255,.6); }
+
+    .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 20px; text-align: center; cursor: pointer; transition: border-color .2s; }
+    .upload-zone:hover { border-color: var(--accent); }
+    .upload-zone p { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    #fileInput { display: none; }
+
+    .control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .control-row label { font-size: 13px; color: var(--muted); }
+
+    .seg-group { display: flex; gap: 4px; }
+    .seg-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; transition: background .15s, color .15s; }
+    .seg-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .seg-btn.active-green { background: var(--accent2); border-color: var(--accent2); color: white; }
+
+    .range-row { margin-bottom: 10px; }
+    .range-row label { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
+    input[type=range] { width: 100%; accent-color: var(--accent); margin-top: 4px; }
+
+    /* Mode card */
+    .mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mode-card { border: 2px solid var(--border); border-radius: var(--radius); padding: 12px 8px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; }
+    .mode-card:hover { border-color: var(--accent); }
+    .mode-card.active { border-color: var(--accent); background: #1a2340; }
+    .mode-card .icon { font-size: 28px; margin-bottom: 6px; }
+    .mode-card .name { font-size: 12px; font-weight: 600; color: var(--text); }
+    .mode-card .desc { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+
+    .main { display: flex; flex-direction: column; overflow: hidden; }
+    .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .tab { padding: 12px 20px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted); transition: color .15s; }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .panels { flex: 1; overflow: hidden; position: relative; }
+    .panel { display: none; height: 100%; overflow: auto; padding: 16px; align-items: center; justify-content: center; }
+    .panel.active { display: flex; }
+    .panel img { max-width: 100%; max-height: 100%; border-radius: var(--radius); object-fit: contain; }
+    #svgPanel { background: white; }
+    #svgPanel svg { max-width: 100%; max-height: 100%; }
+
+    .empty-state { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--muted); padding: 40px; }
+    .empty-state .icon { font-size: 48px; }
+    .empty-state p { font-size: 14px; text-align: center; max-width: 280px; }
+
+    .banner { margin: 12px 16px; padding: 10px 14px; border-radius: var(--radius); font-size: 13px; display: none; }
+    .banner.error   { background: #2d1a1a; border: 1px solid var(--warn);   color: #f08080; display: block; }
+    .banner.success { background: #1a2d1e; border: 1px solid var(--accent2); color: #6fcf8a; display: block; }
+    .banner.info    { background: #1a1f2d; border: 1px solid var(--accent);  color: #80a8f0; display: block; }
+
+    .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,.2); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; display: none; }
+    .spinner.show { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .markers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+    .marker-chip { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 6px; background: #1e1e2e; border: 1px solid var(--border); font-size: 11px; }
+    .marker-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+    .marker-dot.found { background: var(--accent2); }
+
+    .download-bar { padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface); display: flex; gap: 8px; }
+    .download-bar .btn { width: auto; padding: 8px 16px; }
+
+    .paper-tip { background: #1a2030; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 11px; color: var(--muted); line-height: 1.6; margin-top: 10px; }
+    .paper-tip strong { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Open<span>Trace</span></div>
+    <div class="version">v0.1.0 — Sketch to SVG</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="status-pill" id="serverStatus">● Connected</div>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+
+    <!-- ── Marker Mode ── -->
+    <div class="sidebar-section">
+      <h3>Marker Mode</h3>
+      <div class="mode-cards">
+        <div class="mode-card active" id="cardFrame" onclick="setDetectMode('frame')">
+          <div class="icon">🖨️</div>
+          <div class="name">3D Frame</div>
+          <div class="desc">Physical printed frame with white ArUco pads</div>
+        </div>
+        <div class="mode-card" id="cardPaper" onclick="setDetectMode('paper')">
+          <div class="icon">📄</div>
+          <div class="name">Paper Sheet</div>
+          <div class="desc">Printed marker sheet, sketch on top</div>
+        </div>
+      </div>
+
+      <!-- Paper mode extras -->
+      <div id="paperExtras" style="display:none">
+        <div class="paper-tip">
+          <strong>How to use:</strong><br/>
+          Print the marker sheet at <strong>100% scale</strong> (no fit/shrink to page).<br/>
+          Place your sketch on top, then capture.
+        </div>
+        <a href="/static/paper_markers.png" download="opentrace_marker_sheet.png">
+          <button class="btn btn-outline" style="margin-top:10px">⬇️ Download Marker Sheet</button>
+        </a>
+      </div>
+    </div>
+
+    <!-- ── Input ── -->
+    <div class="sidebar-section">
+      <h3>Input</h3>
+      <div class="control-row" style="margin-bottom:10px">
+        <div class="seg-group">
+          <button class="seg-btn active" onclick="setInputMode('camera')">📷 Camera</button>
+          <button class="seg-btn" onclick="setInputMode('upload')">📂 Upload</button>
+        </div>
+      </div>
+
+      <div id="cameraSection">
+        <div class="camera-wrap">
+          <video id="videoEl" autoplay playsinline muted></video>
+          <div class="camera-hint">Position markers in view</div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:10px" onclick="captureFromCamera()">📸 Capture</button>
+        <button class="btn btn-secondary" onclick="toggleCamera()" id="camToggleBtn">Start Camera</button>
+      </div>
+
+      <div id="uploadSection" style="display:none">
+        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+          <div style="font-size:32px">🖼️</div>
+          <p>Click to select image, or drag & drop</p>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFileUpload(event)"/>
+      </div>
+    </div>
+
+    <!-- ── Marker status ── -->
+    <div class="sidebar-section">
+      <h3>ArUco Markers</h3>
+      <div class="markers-grid">
+        <div class="marker-chip"><div class="marker-dot" id="m0"></div>ID 0 — BL</div>
+        <div class="marker-chip"><div class="marker-dot" id="m1"></div>ID 1 — BR</div>
+        <div class="marker-chip"><div class="marker-dot" id="m2"></div>ID 2 — TL</div>
+        <div class="marker-chip"><div class="marker-dot" id="m3"></div>ID 3 — TR</div>
+      </div>
+    </div>
+
+    <!-- ── Vector settings ── -->
+    <div class="sidebar-section">
+      <h3>Vectorization</h3>
+      <div class="control-row">
+        <label>Mode</label>
+        <div class="seg-group">
+          <button class="seg-btn active" id="modeOutline" onclick="setMode('outline')">Outline</button>
+          <button class="seg-btn" id="modeCenterline" onclick="setMode('centerline')">Centerline</button>
+        </div>
+      </div>
+      <div class="range-row">
+        <label>Smoothing <span id="smoothVal">1</span></label>
+        <input type="range" id="smoothRange" min="0" max="3" value="1"
+               oninput="document.getElementById('smoothVal').textContent=this.value"/>
+      </div>
+    </div>
+
+    <!-- ── Process ── -->
+    <div class="sidebar-section">
+      <button class="btn btn-success" id="processBtn" onclick="processImage()" disabled>
+        <span class="spinner" id="processSpinner"></span>
+        <span id="processBtnLabel">⚡ Process Image</span>
+      </button>
+    </div>
+
+    <div style="flex:1"></div>
+    <div class="sidebar-section" style="font-size:11px; color:var(--muted); line-height:1.6">
+      <strong style="color:var(--text)">OpenTrace</strong> — open source sketch-to-SVG.<br/>
+      ArUco: DICT_4X4_50, IDs 0–3.
+    </div>
+  </aside>
+
+  <main class="main">
+    <div id="banner" class="banner"></div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="setTab('debug')">Debug View</div>
+      <div class="tab" onclick="setTab('preview')">Corrected</div>
+      <div class="tab" onclick="setTab('binary')">Threshold</div>
+      <div class="tab" onclick="setTab('svg')">SVG</div>
+    </div>
+
+    <div class="panels">
+      <div class="panel active" id="debugPanel">
+        <div class="empty-state" id="debugEmpty">
+          <div class="icon">🎯</div>
+          <p>Capture or upload an image to detect your ArUco markers</p>
+        </div>
+        <img id="debugImg" style="display:none"/>
+      </div>
+      <div class="panel" id="previewPanel">
+        <div class="empty-state" id="previewEmpty">
+          <div class="icon">✂️</div>
+          <p>Perspective-corrected capture area will appear here</p>
+        </div>
+        <img id="previewImg" style="display:none"/>
+      </div>
+      <div class="panel" id="binaryPanel">
+        <div class="empty-state" id="binaryEmpty">
+          <div class="icon">🔲</div>
+          <p>Thresholded ink detection will appear here</p>
+        </div>
+        <img id="binaryImg" style="display:none"/>
+      </div>
+      <div class="panel" id="svgPanel">
+        <div class="empty-state" id="svgEmpty">
+          <div class="icon">📐</div>
+          <p>Vector SVG output will appear here</p>
+        </div>
+        <div id="svgDisplay" style="display:none; width:100%; height:100%; overflow:auto; padding:16px"></div>
+      </div>
+    </div>
+
+    <div class="download-bar" id="downloadBar" style="display:none">
+      <button class="btn btn-primary" onclick="downloadSVG()">⬇️ Download SVG</button>
+      <button class="btn btn-secondary" onclick="copySVG()">📋 Copy SVG</button>
+      <span style="font-size:12px; color:var(--muted); align-self:center; margin-left:8px" id="svgInfo"></span>
+    </div>
+  </main>
+</div>
+
+<script>
+let currentMode  = 'outline';
+let detectMode   = 'frame';
+let inputMode    = 'camera';
+let capturedFile = null;
+let svgOutput    = null;
+let cameraStream = null;
+let cameraRunning = false;
+
+function setDetectMode(mode) {
+  detectMode = mode;
+  document.getElementById('cardFrame').classList.toggle('active', mode === 'frame');
+  document.getElementById('cardPaper').classList.toggle('active', mode === 'paper');
+  document.getElementById('paperExtras').style.display = mode === 'paper' ? 'block' : 'none';
+}
+
+function setInputMode(mode) {
+  inputMode = mode;
+  document.getElementById('cameraSection').style.display = mode === 'camera' ? 'block' : 'none';
+  document.getElementById('uploadSection').style.display = mode === 'upload' ? 'block' : 'none';
+  document.querySelectorAll('.seg-btn').forEach((b, i) => {
+    if (i < 2) b.classList.toggle('active', (i===0 && mode==='camera') || (i===1 && mode==='upload'));
+  });
+  if (mode !== 'camera' && cameraStream) stopCamera();
+}
+
+async function toggleCamera() {
+  if (cameraRunning) { stopCamera(); return; }
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+    document.getElementById('videoEl').srcObject = cameraStream;
+    cameraRunning = true;
+    document.getElementById('camToggleBtn').textContent = 'Stop Camera';
+    showBanner('Camera started — position markers in view', 'info');
+  } catch(e) {
+    showBanner('Camera error: ' + e.message, 'error');
+  }
+}
+
+function stopCamera() {
+  if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+  cameraStream = null;
+  cameraRunning = false;
+  document.getElementById('camToggleBtn').textContent = 'Start Camera';
+}
+
+function captureFromCamera() {
+  const video = document.getElementById('videoEl');
+  if (!cameraRunning || video.videoWidth === 0) { showBanner('Start the camera first', 'error'); return; }
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  canvas.toBlob(blob => {
+    capturedFile = new File([blob], 'capture.jpg', { type: 'image/jpeg' });
+    document.getElementById('processBtn').disabled = false;
+    showBanner('Image captured — click Process Image', 'success');
+  }, 'image/jpeg', 0.95);
+}
+
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  capturedFile = file;
+  document.getElementById('processBtn').disabled = false;
+  showBanner(`Loaded: ${file.name}`, 'success');
+}
+
+const uploadZone = document.querySelector('.upload-zone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = 'var(--accent)'; });
+uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    capturedFile = file;
+    document.getElementById('processBtn').disabled = false;
+    showBanner(`Loaded: ${file.name}`, 'success');
+  }
+});
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('modeOutline').classList.toggle('active', mode === 'outline');
+  document.getElementById('modeCenterline').classList.toggle('active', mode === 'centerline');
+}
+
+async function processImage() {
+  if (!capturedFile) { showBanner('No image captured yet', 'error'); return; }
+  const btn = document.getElementById('processBtn');
+  const spinner = document.getElementById('processSpinner');
+  const label = document.getElementById('processBtnLabel');
+  btn.disabled = true; spinner.classList.add('show'); label.textContent = 'Processing…';
+  hideBanner();
+
+  const fd = new FormData();
+  fd.append('file', capturedFile);
+  fd.append('mode', currentMode);
+  fd.append('smoothing', document.getElementById('smoothRange').value);
+  fd.append('detect_mode', detectMode);
+
+  try {
+    const res  = await fetch('/api/process', { method: 'POST', body: fd });
+    const data = await res.json();
+    handleResult(data);
+  } catch(e) {
+    showBanner('Server error: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; spinner.classList.remove('show'); label.textContent = '⚡ Process Image';
+  }
+}
+
+function handleResult(data) {
+  [0,1,2,3].forEach(id => {
+    document.getElementById(`m${id}`).classList.toggle('found', data.markers_found?.includes(id));
+  });
+
+  if (data.debug_image) {
+    const img = document.getElementById('debugImg');
+    img.src = data.debug_image; img.style.display = 'block';
+    document.getElementById('debugEmpty').style.display = 'none';
+  }
+
+  if (!data.success) { showBanner('Detection failed: ' + data.error, 'error'); setTab('debug'); return; }
+
+  if (data.preview_image) {
+    const img = document.getElementById('previewImg');
+    img.src = data.preview_image; img.style.display = 'block';
+    document.getElementById('previewEmpty').style.display = 'none';
+  }
+  if (data.binary_image) {
+    const img = document.getElementById('binaryImg');
+    img.src = data.binary_image; img.style.display = 'block';
+    document.getElementById('binaryEmpty').style.display = 'none';
+  }
+  if (data.svg) {
+    svgOutput = data.svg;
+    const display = document.getElementById('svgDisplay');
+    display.innerHTML = data.svg; display.style.display = 'block';
+    document.getElementById('svgEmpty').style.display = 'none';
+    const pathCount = (data.svg.match(/<path/g) || []).length;
+    document.getElementById('svgInfo').textContent =
+      `${pathCount} paths  |  ${data.width_mm}×${data.height_mm}mm  |  ${data.detect_mode} mode`;
+    document.getElementById('downloadBar').style.display = 'flex';
+    setTab('svg');
+  }
+  showBanner(`Done! Found ${data.markers_found.length}/4 markers — ${data.detect_mode} mode`, 'success');
+}
+
+function downloadSVG() {
+  if (!svgOutput) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([svgOutput], { type: 'image/svg+xml' }));
+  a.download = 'opentrace.svg'; a.click();
+}
+function copySVG() {
+  if (!svgOutput) return;
+  navigator.clipboard.writeText(svgOutput)
+    .then(() => showBanner('SVG copied to clipboard!', 'success'))
+    .catch(() => showBanner('Copy failed', 'error'));
+}
+
+function setTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', ['debug','preview','binary','svg'][i] === name);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(name + 'Panel').classList.add('active');
+}
+function showBanner(msg, type) { const b = document.getElementById('banner'); b.textContent = msg; b.className = 'banner ' + type; }
+function hideBanner() { document.getElementById('banner').className = 'banner'; }
+
+fetch('/api/health').catch(() => {
+  document.getElementById('serverStatus').textContent = '○ Offline';
+  document.getElementById('serverStatus').style.color = 'var(--warn)';
+});
+</script>
+</body>
+</html>
