@@ -37,7 +37,7 @@ opentrace/
     └── index.html       # Web UI
 ```
 
-## Frame Reference
+## Frame Reference (WIP - FILES POSTED SOON)
 
 - Capture area: 215.9 × 279.4 mm (8.5" × 11")
 - Border: 30 mm all sides
