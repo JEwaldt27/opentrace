@@ -53,3 +53,23 @@ opentrace/
 - The camera does NOT need to be directly overhead — the perspective correction handles angles up to ~45°.
 - If markers aren't detected, check the Debug View tab to see what the server sees.
 - Centerline mode works best for single-stroke drawings. Outline mode works best for thick/filled shapes.
+
+## Changelog
+
+### v0.2.0
+- Initial public release
+- ArUco marker detection with perspective correction (Frame and Paper Sheet modes)
+- Outline and Centerline vectorization modes
+- Brightness, contrast, and smoothing controls
+- Invert toggle for light ink on dark paper
+- Manual crop with drag-to-select on the Corrected tab
+- Per-path deletion with undo stack
+- Scale multiplier with presets (0.5×, 1×, 2×, 3×, custom)
+- SVG download and clipboard copy
+
+### v0.2.1
+- Fixed SVG `width`/`height` attributes to use real mm dimensions instead of pixels — SVGs now import at correct physical size in Inkscape and laser software
+- Added **📏 Measure Tool** — click two points on the SVG to measure the real-world distance in mm and inches
+- Added **⇲ Autoscale** — place two measure points on a known reference line in your sketch, enter the true distance, and the SVG rescales automatically. Accepts `1in`, `25.4mm`, or bare numbers (mm assumed)
+- Added **zoom and pan** in the SVG tab — scroll wheel to zoom toward cursor, `+`/`−`/reset buttons in the corner, middle-mouse drag to pan
+- Path deletion is now blocked while measure mode is active to prevent accidental deletes

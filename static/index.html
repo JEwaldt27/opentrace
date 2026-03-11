@@ -2,119 +2,163 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>OpenTrace</title>
   <style>
     :root {
-      --bg:      #0f1117;
-      --surface: #1a1d27;
-      --border:  #2a2d3e;
-      --accent:  #4f8ef7;
-      --accent2: #27ae60;
-      --warn:    #e74c3c;
-      --text:    #e8eaf0;
-      --muted:   #6b7280;
-      --radius:  10px;
+      --bg:#0f1117; --surface:#1a1d27; --border:#2a2d3e;
+      --accent:#4f8ef7; --accent2:#27ae60; --warn:#e74c3c;
+      --text:#e8eaf0; --muted:#6b7280; --radius:10px;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
 
-    header { display: flex; align-items: center; gap: 12px; padding: 14px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
-    .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
-    .logo span { color: var(--accent); }
-    .version { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    header .spacer { flex: 1; }
-    .status-pill { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: #1e3a2a; color: var(--accent2); border: 1px solid #2d5a3d; }
+    header { display:flex; align-items:center; gap:12px; padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--border); }
+    .logo { font-size:20px; font-weight:700; } .logo span { color:var(--accent); }
+    .version { font-size:11px; color:var(--muted); margin-top:2px; }
+    header .spacer { flex:1; }
+    .status-pill { font-size:11px; padding:4px 10px; border-radius:20px; background:#1e3a2a; color:var(--accent2); border:1px solid #2d5a3d; }
 
-    .app { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 53px); }
+    .app { display:grid; grid-template-columns:320px 1fr; height:calc(100vh - 53px); }
+    .sidebar { background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; }
+    .sidebar-section { padding:16px; border-bottom:1px solid var(--border); }
+    .sidebar-section h3 { font-size:11px; font-weight:600; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
 
-    .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
-    .sidebar-section { padding: 16px; border-bottom: 1px solid var(--border); }
-    .sidebar-section h3 { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:10px 16px; border-radius:var(--radius); border:none; cursor:pointer; font-size:14px; font-weight:500; transition:opacity .15s,transform .1s; }
+    .btn:active { transform:scale(.98); } .btn:disabled { opacity:.4; cursor:not-allowed; }
+    .btn-primary  { background:var(--accent);  color:white; }
+    .btn-success  { background:var(--accent2); color:white; }
+    .btn-secondary{ background:var(--border);  color:var(--text); }
+    .btn-outline  { background:transparent; border:1px solid var(--border); color:var(--muted); }
+    .btn + .btn   { margin-top:8px; }
 
-    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: opacity .15s, transform .1s; }
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary   { background: var(--accent);  color: white; }
-    .btn-success   { background: var(--accent2); color: white; }
-    .btn-secondary { background: var(--border);  color: var(--text); }
-    .btn-outline   { background: transparent; border: 1px solid var(--border); color: var(--muted); }
-    .btn + .btn { margin-top: 8px; }
+    .camera-wrap { position:relative; background:#000; border-radius:var(--radius); overflow:hidden; aspect-ratio:4/3; }
+    #videoEl { width:100%; height:100%; object-fit:cover; display:block; }
+    .camera-hint { position:absolute; bottom:8px; left:0; right:0; text-align:center; font-size:11px; color:rgba(255,255,255,.6); }
 
-    .camera-wrap { position: relative; background: #000; border-radius: var(--radius); overflow: hidden; aspect-ratio: 4/3; }
-    #videoEl { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .camera-hint { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; font-size: 11px; color: rgba(255,255,255,.6); }
+    .upload-zone { border:2px dashed var(--border); border-radius:var(--radius); padding:20px; text-align:center; cursor:pointer; transition:border-color .2s; }
+    .upload-zone:hover { border-color:var(--accent); }
+    .upload-zone p { font-size:13px; color:var(--muted); margin-top:6px; }
+    #fileInput { display:none; }
 
-    .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 20px; text-align: center; cursor: pointer; transition: border-color .2s; }
-    .upload-zone:hover { border-color: var(--accent); }
-    .upload-zone p { font-size: 13px; color: var(--muted); margin-top: 6px; }
-    #fileInput { display: none; }
+    .control-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .control-row label { font-size:13px; color:var(--muted); }
+    .seg-group { display:flex; gap:4px; }
+    .seg-btn { padding:5px 12px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:12px; cursor:pointer; transition:background .15s,color .15s; }
+    .seg-btn.active { background:var(--accent); border-color:var(--accent); color:white; }
 
-    .control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .control-row label { font-size: 13px; color: var(--muted); }
+    .range-row { margin-bottom:10px; }
+    .range-row label { font-size:13px; color:var(--muted); display:flex; justify-content:space-between; margin-bottom:3px; }
+    input[type=range] { width:100%; accent-color:var(--accent); }
 
-    .seg-group { display: flex; gap: 4px; }
-    .seg-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; transition: background .15s, color .15s; }
-    .seg-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
-    .seg-btn.active-green { background: var(--accent2); border-color: var(--accent2); color: white; }
+    .toggle-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .toggle-row label { font-size:13px; color:var(--muted); }
+    .toggle { position:relative; width:36px; height:20px; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .toggle-slider { position:absolute; inset:0; background:var(--border); border-radius:20px; cursor:pointer; transition:background .2s; }
+    .toggle-slider:before { content:""; position:absolute; width:14px; height:14px; left:3px; top:3px; background:white; border-radius:50%; transition:transform .2s; }
+    .toggle input:checked + .toggle-slider { background:var(--accent); }
+    .toggle input:checked + .toggle-slider:before { transform:translateX(16px); }
 
-    .range-row { margin-bottom: 10px; }
-    .range-row label { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
-    input[type=range] { width: 100%; accent-color: var(--accent); margin-top: 4px; }
+    .mode-cards { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .mode-card { border:2px solid var(--border); border-radius:var(--radius); padding:12px 8px; text-align:center; cursor:pointer; transition:border-color .2s,background .2s; }
+    .mode-card:hover { border-color:var(--accent); }
+    .mode-card.active { border-color:var(--accent); background:#1a2340; }
+    .mode-card .icon { font-size:28px; margin-bottom:6px; }
+    .mode-card .name { font-size:12px; font-weight:600; }
+    .mode-card .desc { font-size:10px; color:var(--muted); margin-top:2px; line-height:1.4; }
 
-    /* Mode card */
-    .mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .mode-card { border: 2px solid var(--border); border-radius: var(--radius); padding: 12px 8px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; }
-    .mode-card:hover { border-color: var(--accent); }
-    .mode-card.active { border-color: var(--accent); background: #1a2340; }
-    .mode-card .icon { font-size: 28px; margin-bottom: 6px; }
-    .mode-card .name { font-size: 12px; font-weight: 600; color: var(--text); }
-    .mode-card .desc { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .scale-row { display:flex; align-items:center; gap:8px; }
+    .scale-row input[type=number] { width:70px; padding:5px 8px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; }
+    .scale-row input[type=number]:focus { outline:none; border-color:var(--accent); }
+    .scale-presets { display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+    .scale-preset { padding:3px 8px; border-radius:5px; border:1px solid var(--border); background:transparent; color:var(--muted); font-size:11px; cursor:pointer; }
+    .scale-preset:hover { border-color:var(--accent); color:var(--accent); }
 
-    .main { display: flex; flex-direction: column; overflow: hidden; }
-    .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); }
-    .tab { padding: 12px 20px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--muted); transition: color .15s; }
-    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .paper-tip { background:#1a2030; border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-size:11px; color:var(--muted); line-height:1.6; margin-top:10px; }
+    .paper-tip strong { color:var(--text); }
 
-    .panels { flex: 1; overflow: hidden; position: relative; }
-    .panel { display: none; height: 100%; overflow: auto; padding: 16px; align-items: center; justify-content: center; }
-    .panel.active { display: flex; }
-    .panel img { max-width: 100%; max-height: 100%; border-radius: var(--radius); object-fit: contain; }
-    #svgPanel { background: white; }
-    #svgPanel svg { max-width: 100%; max-height: 100%; }
+    .main { display:flex; flex-direction:column; overflow:hidden; }
+    .tabs { display:flex; border-bottom:1px solid var(--border); background:var(--surface); }
+    .tab { padding:12px 20px; font-size:13px; cursor:pointer; border-bottom:2px solid transparent; color:var(--muted); transition:color .15s; }
+    .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+    .tab-badge { display:inline-block; background:var(--accent); color:white; font-size:10px; padding:1px 5px; border-radius:10px; margin-left:4px; vertical-align:middle; }
 
-    .empty-state { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--muted); padding: 40px; }
-    .empty-state .icon { font-size: 48px; }
-    .empty-state p { font-size: 14px; text-align: center; max-width: 280px; }
+    .panels { flex:1; overflow:hidden; }
+    .panel { display:none; height:100%; overflow:auto; padding:16px; align-items:center; justify-content:center; }
+    .panel.active { display:flex; }
 
-    .banner { margin: 12px 16px; padding: 10px 14px; border-radius: var(--radius); font-size: 13px; display: none; }
-    .banner.error   { background: #2d1a1a; border: 1px solid var(--warn);   color: #f08080; display: block; }
-    .banner.success { background: #1a2d1e; border: 1px solid var(--accent2); color: #6fcf8a; display: block; }
-    .banner.info    { background: #1a1f2d; border: 1px solid var(--accent);  color: #80a8f0; display: block; }
+    .panel img { max-width:100%; max-height:100%; border-radius:var(--radius); object-fit:contain; }
 
-    .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,.2); border-top-color: white; border-radius: 50%; animation: spin .7s linear infinite; display: none; }
-    .spinner.show { display: inline-block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Corrected / crop panel */
+    #previewPanel { padding:0; background:#111; }
+    #cropContainer { position:relative; display:inline-block; max-width:100%; max-height:100%; }
+    #previewImg { display:block; max-width:100%; max-height:calc(100vh - 200px); }
+    #cropCanvas { position:absolute; top:0; left:0; width:100%; height:100%; cursor:crosshair; }
+    .crop-hint { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.7); color:white; font-size:12px; padding:6px 12px; border-radius:20px; pointer-events:none; white-space:nowrap; }
 
-    .markers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
-    .marker-chip { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 6px; background: #1e1e2e; border: 1px solid var(--border); font-size: 11px; }
-    .marker-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
-    .marker-dot.found { background: var(--accent2); }
+    /* SVG panel */
+    #svgPanel { flex-direction:column; padding:0; }
+    .svg-toolbar { display:flex; align-items:center; gap:6px; padding:8px 12px; background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+    .svg-toolbar span { font-size:12px; color:var(--muted); }
+    .stbtn { padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; cursor:pointer; white-space:nowrap; }
+    .stbtn:hover { border-color:var(--accent); color:var(--accent); }
+    .stbtn.danger { border-color:var(--warn); color:var(--warn); }
+    .stbtn.danger:hover { background:var(--warn); color:white; }
+    .stbtn.measure-active { background:#8e44ad; color:white; border-color:#8e44ad; }
 
-    .download-bar { padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface); display: flex; gap: 8px; }
-    .download-bar .btn { width: auto; padding: 8px 16px; }
+    .measure-bar { display:none; align-items:center; gap:8px; padding:7px 12px; background:#1a0a2e; border-bottom:1px solid #5b2d8e; font-size:12px; flex-wrap:wrap; }
+    .measure-bar.show { display:flex; }
+    .measure-bar strong { color:#c39be8; }
+    #measureHint { color:#9b7abf; }
+    #measureResult { font-weight:700; color:#c39be8; font-size:13px; min-width:120px; }
+    #measureResult.has-value { color:#a8e6a3; }
+    .mbtn { padding:4px 10px; border-radius:6px; border:1px solid #8e44ad; background:transparent; color:#c39be8; font-size:12px; cursor:pointer; white-space:nowrap; }
+    .mbtn:hover { background:#8e44ad; color:white; }
+    .mbtn.autoscale { background:#8e44ad; color:white; }
+    .mbtn.autoscale:hover { background:#7d3d9c; }
+    .mbtn.clear { border-color:var(--warn); color:var(--warn); }
+    .mbtn.clear:hover { background:var(--warn); color:white; }
 
-    .paper-tip { background: #1a2030; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 11px; color: var(--muted); line-height: 1.6; margin-top: 10px; }
-    .paper-tip strong { color: var(--text); }
+    /* SVG display area */
+    #svgDisplayWrap { flex:1; overflow:hidden; position:relative; }
+    #svgViewport { transform-origin:0 0; will-change:transform; padding:16px; }
+    #svgDisplay svg { display:block; }
+    #svgDisplay svg path { transition:opacity .1s; }
+    #svgMeasureOverlay { position:absolute; top:0; left:0; pointer-events:none; }
+
+    .zoom-controls { position:absolute; bottom:12px; right:12px; display:flex; flex-direction:column; gap:4px; z-index:10; }
+    .zoom-btn { width:30px; height:30px; border-radius:6px; border:1px solid #555; background:rgba(30,30,40,.9); color:white; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .zoom-btn:hover { background:rgba(79,142,247,.8); }
+    .zoom-label { background:rgba(0,0,0,.6); color:white; font-size:10px; padding:2px 4px; border-radius:4px; text-align:center; pointer-events:none; }
+
+    .empty-state { display:flex; flex-direction:column; align-items:center; gap:12px; color:var(--muted); padding:40px; }
+    .empty-state .icon { font-size:48px; }
+    .empty-state p { font-size:14px; text-align:center; max-width:280px; }
+
+    .banner { margin:10px 16px; padding:10px 14px; border-radius:var(--radius); font-size:13px; display:none; }
+    .banner.error   { background:#2d1a1a; border:1px solid var(--warn);   color:#f08080; display:block; }
+    .banner.success { background:#1a2d1e; border:1px solid var(--accent2); color:#6fcf8a; display:block; }
+    .banner.info    { background:#1a1f2d; border:1px solid var(--accent);  color:#80a8f0; display:block; }
+
+    .spinner { width:20px; height:20px; border:2px solid rgba(255,255,255,.2); border-top-color:white; border-radius:50%; animation:spin .7s linear infinite; display:none; }
+    .spinner.show { display:inline-block; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    .markers-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+    .marker-chip { display:flex; align-items:center; gap:6px; padding:5px 8px; border-radius:6px; background:#1e1e2e; border:1px solid var(--border); font-size:11px; }
+    .marker-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0; }
+    .marker-dot.found { background:var(--accent2); }
+
+    .download-bar { padding:12px 16px; border-top:1px solid var(--border); background:var(--surface); display:flex; gap:8px; flex-wrap:wrap; }
+    .download-bar .btn { width:auto; padding:8px 16px; }
   </style>
 </head>
 <body>
 
 <header>
-  <div>
-    <div class="logo">Open<span>Trace</span></div>
-    <div class="version">v0.1.0 — Sketch to SVG</div>
-  </div>
+  <div><div class="logo">Open<span>Trace</span></div><div class="version">v0.2.0 — Sketch to SVG</div></div>
   <div class="spacer"></div>
   <div class="status-pill" id="serverStatus">● Connected</div>
 </header>
@@ -122,64 +166,51 @@
 <div class="app">
   <aside class="sidebar">
 
-    <!-- ── Marker Mode ── -->
     <div class="sidebar-section">
       <h3>Marker Mode</h3>
       <div class="mode-cards">
         <div class="mode-card active" id="cardFrame" onclick="setDetectMode('frame')">
-          <div class="icon">🖨️</div>
-          <div class="name">3D Frame</div>
-          <div class="desc">Physical printed frame with white ArUco pads</div>
+          <div class="icon">🖨️</div><div class="name">3D Frame</div>
+          <div class="desc">Physical printed frame with ArUco pads</div>
         </div>
         <div class="mode-card" id="cardPaper" onclick="setDetectMode('paper')">
-          <div class="icon">📄</div>
-          <div class="name">Paper Sheet</div>
+          <div class="icon">📄</div><div class="name">Paper Sheet</div>
           <div class="desc">Printed marker sheet, sketch on top</div>
         </div>
       </div>
-
-      <!-- Paper mode extras -->
       <div id="paperExtras" style="display:none">
-        <div class="paper-tip">
-          <strong>How to use:</strong><br/>
-          Print the marker sheet at <strong>100% scale</strong> (no fit/shrink to page).<br/>
-          Place your sketch on top, then capture.
-        </div>
+        <div class="paper-tip"><strong>Print at 100% scale</strong> (no fit/shrink).<br/>Place sketch on top, then capture.</div>
         <a href="/static/paper_markers.png" download="opentrace_marker_sheet.png">
           <button class="btn btn-outline" style="margin-top:10px">⬇️ Download Marker Sheet</button>
         </a>
       </div>
     </div>
 
-    <!-- ── Input ── -->
     <div class="sidebar-section">
       <h3>Input</h3>
       <div class="control-row" style="margin-bottom:10px">
         <div class="seg-group">
-          <button class="seg-btn active" onclick="setInputMode('camera')">📷 Camera</button>
-          <button class="seg-btn" onclick="setInputMode('upload')">📂 Upload</button>
+          <button class="seg-btn active" id="inputCameraBtn" onclick="setInputMode('camera')">📷 Camera</button>
+          <button class="seg-btn" id="inputUploadBtn" onclick="setInputMode('upload')">📂 Upload</button>
         </div>
       </div>
-
       <div id="cameraSection">
         <div class="camera-wrap">
           <video id="videoEl" autoplay playsinline muted></video>
           <div class="camera-hint">Position markers in view</div>
         </div>
         <button class="btn btn-primary" style="margin-top:10px" onclick="captureFromCamera()">📸 Capture</button>
-        <button class="btn btn-secondary" onclick="toggleCamera()" id="camToggleBtn">Start Camera</button>
+        <button class="btn btn-secondary" id="camToggleBtn" onclick="toggleCamera()">Start Camera</button>
       </div>
-
       <div id="uploadSection" style="display:none">
-        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
           <div style="font-size:32px">🖼️</div>
-          <p>Click to select image, or drag & drop</p>
+          <p>Click to select image, or drag &amp; drop</p>
         </div>
         <input type="file" id="fileInput" accept="image/*" onchange="handleFileUpload(event)"/>
       </div>
     </div>
 
-    <!-- ── Marker status ── -->
     <div class="sidebar-section">
       <h3>ArUco Markers</h3>
       <div class="markers-grid">
@@ -190,15 +221,21 @@
       </div>
     </div>
 
-    <!-- ── Vector settings ── -->
     <div class="sidebar-section">
-      <h3>Vectorization</h3>
-      <div class="control-row">
-        <label>Mode</label>
-        <div class="seg-group">
-          <button class="seg-btn active" id="modeOutline" onclick="setMode('outline')">Outline</button>
-          <button class="seg-btn" id="modeCenterline" onclick="setMode('centerline')">Centerline</button>
-        </div>
+      <h3>Image Adjustments</h3>
+      <div class="toggle-row">
+        <label>Invert (light ink / dark paper)</label>
+        <label class="toggle"><input type="checkbox" id="invertToggle"/><span class="toggle-slider"></span></label>
+      </div>
+      <div class="range-row">
+        <label>Brightness <span id="brightnessVal">1.0</span></label>
+        <input type="range" id="brightnessRange" min="0.3" max="2.5" step="0.1" value="1.0"
+               oninput="document.getElementById('brightnessVal').textContent=parseFloat(this.value).toFixed(1)"/>
+      </div>
+      <div class="range-row">
+        <label>Contrast <span id="contrastVal">1.0</span></label>
+        <input type="range" id="contrastRange" min="0.3" max="3.0" step="0.1" value="1.0"
+               oninput="document.getElementById('contrastVal').textContent=parseFloat(this.value).toFixed(1)"/>
       </div>
       <div class="range-row">
         <label>Smoothing <span id="smoothVal">1</span></label>
@@ -207,17 +244,44 @@
       </div>
     </div>
 
-    <!-- ── Process ── -->
+    <div class="sidebar-section">
+      <h3>Vectorization</h3>
+      <div class="control-row">
+        <label>Mode</label>
+        <div class="seg-group">
+          <button class="seg-btn active" id="modeOutline" onclick="setVecMode('outline')">Outline</button>
+          <button class="seg-btn" id="modeCenterline" onclick="setVecMode('centerline')">Centerline</button>
+        </div>
+      </div>
+      <div style="margin-top:4px">
+        <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px">Output Scale</label>
+        <div class="scale-row">
+          <input type="number" id="scaleInput" value="1.0" min="0.1" max="10" step="0.1"/>
+          <span style="font-size:12px;color:var(--muted)">× actual size</span>
+        </div>
+        <div class="scale-presets">
+          <button class="scale-preset" onclick="setScale(0.5)">0.5×</button>
+          <button class="scale-preset" onclick="setScale(1.0)">1×</button>
+          <button class="scale-preset" onclick="setScale(2.0)">2×</button>
+          <button class="scale-preset" onclick="setScale(3.0)">3×</button>
+          <button class="scale-preset" onclick="promptCustomScale()">Custom…</button>
+        </div>
+      </div>
+    </div>
+
     <div class="sidebar-section">
       <button class="btn btn-success" id="processBtn" onclick="processImage()" disabled>
         <span class="spinner" id="processSpinner"></span>
         <span id="processBtnLabel">⚡ Process Image</span>
       </button>
+      <button class="btn btn-secondary" id="reprocessBtn" onclick="reprocessCrop()" disabled style="margin-top:8px">
+        ✂️ Apply Crop &amp; Reprocess
+      </button>
     </div>
 
     <div style="flex:1"></div>
-    <div class="sidebar-section" style="font-size:11px; color:var(--muted); line-height:1.6">
-      <strong style="color:var(--text)">OpenTrace</strong> — open source sketch-to-SVG.<br/>
+    <div class="sidebar-section" style="font-size:11px;color:var(--muted);line-height:1.6">
+      <strong style="color:var(--text)">OpenTrace v0.2</strong><br/>
       ArUco: DICT_4X4_50, IDs 0–3.
     </div>
   </aside>
@@ -227,224 +291,713 @@
 
     <div class="tabs">
       <div class="tab active" onclick="setTab('debug')">Debug View</div>
-      <div class="tab" onclick="setTab('preview')">Corrected</div>
+      <div class="tab" onclick="setTab('preview')">Corrected <span style="font-size:10px;color:var(--muted)">(drag to crop)</span></div>
       <div class="tab" onclick="setTab('binary')">Threshold</div>
-      <div class="tab" onclick="setTab('svg')">SVG</div>
+      <div class="tab" onclick="setTab('svg')">SVG <span id="pathCountBadge" class="tab-badge" style="display:none">0</span></div>
     </div>
 
     <div class="panels">
+
       <div class="panel active" id="debugPanel">
-        <div class="empty-state" id="debugEmpty">
-          <div class="icon">🎯</div>
-          <p>Capture or upload an image to detect your ArUco markers</p>
-        </div>
+        <div class="empty-state" id="debugEmpty"><div class="icon">🎯</div><p>Capture or upload an image to detect your ArUco markers</p></div>
         <img id="debugImg" style="display:none"/>
       </div>
+
       <div class="panel" id="previewPanel">
-        <div class="empty-state" id="previewEmpty">
-          <div class="icon">✂️</div>
-          <p>Perspective-corrected capture area will appear here</p>
+        <div class="empty-state" id="previewEmpty"><div class="icon">✂️</div><p>Corrected capture area will appear here. Drag to crop.</p></div>
+        <div id="cropContainer" style="display:none">
+          <img id="previewImg"/>
+          <canvas id="cropCanvas"></canvas>
+          <div class="crop-hint">Drag to select crop area</div>
         </div>
-        <img id="previewImg" style="display:none"/>
       </div>
+
       <div class="panel" id="binaryPanel">
-        <div class="empty-state" id="binaryEmpty">
-          <div class="icon">🔲</div>
-          <p>Thresholded ink detection will appear here</p>
-        </div>
+        <div class="empty-state" id="binaryEmpty"><div class="icon">🔲</div><p>Thresholded ink detection will appear here</p></div>
         <img id="binaryImg" style="display:none"/>
       </div>
+
       <div class="panel" id="svgPanel">
-        <div class="empty-state" id="svgEmpty">
-          <div class="icon">📐</div>
-          <p>Vector SVG output will appear here</p>
+
+        <!-- Toolbar -->
+        <div class="svg-toolbar" id="svgToolbar" style="display:none">
+          <span id="svgPathInfo">0 paths</span>
+          <span style="flex:1"></span>
+          <span id="svgModeHint" style="font-size:11px;color:var(--muted)">Click a path to delete</span>
+          <button class="stbtn" onclick="undoDelete()">↩ Undo</button>
+          <button class="stbtn danger" onclick="clearAllPaths()">🗑 Clear All</button>
+          <button class="stbtn" onclick="rebuildSVG()">↺ Rebuild</button>
+          <button class="stbtn" id="measureToggleBtn" onclick="toggleMeasureMode()" style="border-color:#8e44ad;color:#8e44ad;">📏 Measure</button>
         </div>
-        <div id="svgDisplay" style="display:none; width:100%; height:100%; overflow:auto; padding:16px"></div>
+
+        <!-- Measure bar -->
+        <div class="measure-bar" id="measureBar">
+          <strong>📏 Measure</strong>
+          <span id="measureHint">Click point 1, then point 2</span>
+          <span id="measureResult">—</span>
+          <button class="mbtn autoscale" id="autoscaleBtn" onclick="promptAutoscale()" style="display:none">⇲ Autoscale</button>
+          <span style="flex:1"></span>
+          <button class="mbtn clear" onclick="clearMeasure()">✕ Clear</button>
+          <button class="mbtn" onclick="toggleMeasureMode()">Done</button>
+        </div>
+
+        <!-- SVG display -->
+        <div class="empty-state" id="svgEmpty"><div class="icon">📐</div><p>Vector SVG output will appear here</p></div>
+        <div id="svgDisplayWrap" style="display:none">
+          <div id="svgViewport">
+            <div id="svgDisplay"></div>
+            <svg id="svgMeasureOverlay" width="0" height="0" style="position:absolute;top:0;left:0;pointer-events:none;"></svg>
+          </div>
+          <div class="zoom-controls">
+            <button class="zoom-btn" onclick="adjustZoom(1.25)" title="Zoom in">+</button>
+            <div class="zoom-label" id="zoomLabel">100%</div>
+            <button class="zoom-btn" onclick="adjustZoom(0.8)" title="Zoom out">−</button>
+            <button class="zoom-btn" onclick="resetZoom()" title="Reset" style="font-size:11px">⊡</button>
+          </div>
+        </div>
+
       </div>
     </div>
 
     <div class="download-bar" id="downloadBar" style="display:none">
       <button class="btn btn-primary" onclick="downloadSVG()">⬇️ Download SVG</button>
       <button class="btn btn-secondary" onclick="copySVG()">📋 Copy SVG</button>
-      <span style="font-size:12px; color:var(--muted); align-self:center; margin-left:8px" id="svgInfo"></span>
+      <span style="font-size:12px;color:var(--muted);align-self:center;margin-left:8px" id="svgInfo"></span>
     </div>
   </main>
 </div>
 
 <script>
-let currentMode  = 'outline';
-let detectMode   = 'frame';
-let inputMode    = 'camera';
-let capturedFile = null;
-let svgOutput    = null;
-let cameraStream = null;
-let cameraRunning = false;
+// ── State ─────────────────────────────────────────────────────
+var currentVecMode = 'outline';
+var detectMode     = 'frame';
+var inputMode      = 'camera';
+var capturedFile   = null;
+var svgOutput      = null;
+var cameraStream   = null;
+var cameraRunning  = false;
 
-function setDetectMode(mode) {
-  detectMode = mode;
-  document.getElementById('cardFrame').classList.toggle('active', mode === 'frame');
-  document.getElementById('cardPaper').classList.toggle('active', mode === 'paper');
-  document.getElementById('paperExtras').style.display = mode === 'paper' ? 'block' : 'none';
+var allPaths     = [];
+var deletedPaths = [];
+var imgW = 0, imgH = 0;
+var physWMm = 0, physHMm = 0;
+
+var svgZoom = 1.0, svgPanX = 0, svgPanY = 0;
+var isPanning = false, panStartX = 0, panStartY = 0;
+
+var measureMode   = false;
+var measurePoints = [];
+
+var cropRect = null, cropDragging = false, cropStartX = 0, cropStartY = 0;
+var imgDisplayW = 0, imgDisplayH = 0;
+
+// ── Marker / detect mode ──────────────────────────────────────
+function setDetectMode(m) {
+  detectMode = m;
+  document.getElementById('cardFrame').classList.toggle('active', m === 'frame');
+  document.getElementById('cardPaper').classList.toggle('active', m === 'paper');
+  document.getElementById('paperExtras').style.display = m === 'paper' ? 'block' : 'none';
 }
 
-function setInputMode(mode) {
-  inputMode = mode;
-  document.getElementById('cameraSection').style.display = mode === 'camera' ? 'block' : 'none';
-  document.getElementById('uploadSection').style.display = mode === 'upload' ? 'block' : 'none';
-  document.querySelectorAll('.seg-btn').forEach((b, i) => {
-    if (i < 2) b.classList.toggle('active', (i===0 && mode==='camera') || (i===1 && mode==='upload'));
-  });
-  if (mode !== 'camera' && cameraStream) stopCamera();
+// ── Input mode ────────────────────────────────────────────────
+function setInputMode(m) {
+  inputMode = m;
+  document.getElementById('cameraSection').style.display  = m === 'camera' ? 'block' : 'none';
+  document.getElementById('uploadSection').style.display  = m === 'upload' ? 'block' : 'none';
+  document.getElementById('inputCameraBtn').classList.toggle('active', m === 'camera');
+  document.getElementById('inputUploadBtn').classList.toggle('active', m === 'upload');
+  if (m !== 'camera' && cameraStream) stopCamera();
 }
 
-async function toggleCamera() {
+// ── Camera ────────────────────────────────────────────────────
+function toggleCamera() {
   if (cameraRunning) { stopCamera(); return; }
-  try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
-    });
-    document.getElementById('videoEl').srcObject = cameraStream;
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode:'environment', width:{ideal:1920}, height:{ideal:1080} }
+  }).then(function(stream) {
+    cameraStream = stream;
+    document.getElementById('videoEl').srcObject = stream;
     cameraRunning = true;
     document.getElementById('camToggleBtn').textContent = 'Stop Camera';
-    showBanner('Camera started — position markers in view', 'info');
-  } catch(e) {
+    showBanner('Camera started', 'info');
+  }).catch(function(e) {
     showBanner('Camera error: ' + e.message, 'error');
-  }
+  });
 }
 
 function stopCamera() {
-  if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
-  cameraStream = null;
-  cameraRunning = false;
+  if (cameraStream) cameraStream.getTracks().forEach(function(t) { t.stop(); });
+  cameraStream = null; cameraRunning = false;
   document.getElementById('camToggleBtn').textContent = 'Start Camera';
 }
 
 function captureFromCamera() {
-  const video = document.getElementById('videoEl');
+  var video = document.getElementById('videoEl');
   if (!cameraRunning || video.videoWidth === 0) { showBanner('Start the camera first', 'error'); return; }
-  const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-  canvas.toBlob(blob => {
-    capturedFile = new File([blob], 'capture.jpg', { type: 'image/jpeg' });
+  var c = document.createElement('canvas');
+  c.width = video.videoWidth; c.height = video.videoHeight;
+  c.getContext('2d').drawImage(video, 0, 0);
+  c.toBlob(function(blob) {
+    capturedFile = new File([blob], 'capture.jpg', {type:'image/jpeg'});
     document.getElementById('processBtn').disabled = false;
     showBanner('Image captured — click Process Image', 'success');
   }, 'image/jpeg', 0.95);
 }
 
+// ── File upload ───────────────────────────────────────────────
 function handleFileUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  capturedFile = file;
+  var f = e.target.files[0]; if (!f) return;
+  capturedFile = f;
   document.getElementById('processBtn').disabled = false;
-  showBanner(`Loaded: ${file.name}`, 'success');
+  showBanner('Loaded: ' + f.name, 'success');
 }
 
-const uploadZone = document.querySelector('.upload-zone');
-uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = 'var(--accent)'; });
-uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
-uploadZone.addEventListener('drop', e => {
+var uploadZone = document.getElementById('uploadZone');
+uploadZone.addEventListener('dragover', function(e) { e.preventDefault(); uploadZone.style.borderColor = 'var(--accent)'; });
+uploadZone.addEventListener('dragleave', function()  { uploadZone.style.borderColor = ''; });
+uploadZone.addEventListener('drop', function(e) {
   e.preventDefault(); uploadZone.style.borderColor = '';
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) {
-    capturedFile = file;
+  var f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) {
+    capturedFile = f;
     document.getElementById('processBtn').disabled = false;
-    showBanner(`Loaded: ${file.name}`, 'success');
+    showBanner('Loaded: ' + f.name, 'success');
   }
 });
 
-function setMode(mode) {
-  currentMode = mode;
-  document.getElementById('modeOutline').classList.toggle('active', mode === 'outline');
-  document.getElementById('modeCenterline').classList.toggle('active', mode === 'centerline');
+// ── Vec / scale ───────────────────────────────────────────────
+function setVecMode(m) {
+  currentVecMode = m;
+  document.getElementById('modeOutline').classList.toggle('active',    m === 'outline');
+  document.getElementById('modeCenterline').classList.toggle('active', m === 'centerline');
 }
 
-async function processImage() {
-  if (!capturedFile) { showBanner('No image captured yet', 'error'); return; }
-  const btn = document.getElementById('processBtn');
-  const spinner = document.getElementById('processSpinner');
-  const label = document.getElementById('processBtnLabel');
-  btn.disabled = true; spinner.classList.add('show'); label.textContent = 'Processing…';
+function setScale(v) {
+  document.getElementById('scaleInput').value = v.toFixed(1);
+}
+
+function promptCustomScale() {
+  var s = prompt('Enter scale (e.g. 1.5 for 150%):');
+  if (s && !isNaN(s)) document.getElementById('scaleInput').value = parseFloat(s).toFixed(2);
+}
+
+// ── Tabs ──────────────────────────────────────────────────────
+function setTab(name) {
+  var names = ['debug','preview','binary','svg'];
+  // Update tab button highlights
+  document.querySelectorAll('.tab').forEach(function(t, i) {
+    t.classList.toggle('active', names[i] === name);
+  });
+  // Show/hide panels via inline style (avoids CSS specificity conflicts)
+  names.forEach(function(n) {
+    var p = document.getElementById(n + 'Panel');
+    if (p) p.style.display = 'none';
+  });
+  var active = document.getElementById(name + 'Panel');
+  if (active) {
+    active.style.display      = 'flex';
+    active.style.flexDirection = name === 'svg' ? 'column' : 'row';
+  }
+  if (name === 'preview') setTimeout(setupCropCanvas, 50);
+}
+
+// ── Process ───────────────────────────────────────────────────
+function processImage() {
+  if (!capturedFile) { showBanner('No image captured', 'error'); return; }
+  cropRect = null;
+  drawCropCanvas();
+  doProcess(0, 0, 0, 0);
+}
+
+function reprocessCrop() {
+  if (!capturedFile) return;
+  if (!cropRect) { showBanner('Draw a crop area on the Corrected tab first', 'info'); return; }
+  var scaleX = imgW / imgDisplayW;
+  var scaleY = imgH / imgDisplayH;
+  doProcess(cropRect.x * scaleX, cropRect.y * scaleY, cropRect.w * scaleX, cropRect.h * scaleY);
+}
+
+function doProcess(cx, cy, cw, ch) {
+  var btn     = document.getElementById('processBtn');
+  var spinner = document.getElementById('processSpinner');
+  var label   = document.getElementById('processBtnLabel');
+  btn.disabled = true;
+  spinner.classList.add('show');
+  label.textContent = 'Processing…';
   hideBanner();
 
-  const fd = new FormData();
-  fd.append('file', capturedFile);
-  fd.append('mode', currentMode);
-  fd.append('smoothing', document.getElementById('smoothRange').value);
-  fd.append('detect_mode', detectMode);
+  var fd = new FormData();
+  fd.append('file',         capturedFile);
+  fd.append('mode',         currentVecMode);
+  fd.append('smoothing',    document.getElementById('smoothRange').value);
+  fd.append('detect_mode',  detectMode);
+  fd.append('invert',       document.getElementById('invertToggle').checked);
+  fd.append('brightness',   document.getElementById('brightnessRange').value);
+  fd.append('contrast',     document.getElementById('contrastRange').value);
+  fd.append('scale',        document.getElementById('scaleInput').value);
+  fd.append('crop_x', cx); fd.append('crop_y', cy);
+  fd.append('crop_w', cw); fd.append('crop_h', ch);
 
-  try {
-    const res  = await fetch('/api/process', { method: 'POST', body: fd });
-    const data = await res.json();
-    handleResult(data);
-  } catch(e) {
-    showBanner('Server error: ' + e.message, 'error');
-  } finally {
-    btn.disabled = false; spinner.classList.remove('show'); label.textContent = '⚡ Process Image';
-  }
+  fetch('/api/process', {method:'POST', body:fd})
+    .then(function(r) { return r.json(); })
+    .then(function(data) { handleResult(data); })
+    .catch(function(e) { showBanner('Server error: ' + e.message, 'error'); })
+    .finally(function() {
+      btn.disabled = false;
+      spinner.classList.remove('show');
+      label.textContent = '⚡ Process Image';
+    });
 }
 
 function handleResult(data) {
-  [0,1,2,3].forEach(id => {
-    document.getElementById(`m${id}`).classList.toggle('found', data.markers_found?.includes(id));
+  [0,1,2,3].forEach(function(id) {
+    document.getElementById('m' + id).classList.toggle('found', !!(data.markers_found && data.markers_found.indexOf(id) !== -1));
   });
 
   if (data.debug_image) {
-    const img = document.getElementById('debugImg');
-    img.src = data.debug_image; img.style.display = 'block';
+    var di = document.getElementById('debugImg');
+    di.src = data.debug_image; di.style.display = 'block';
     document.getElementById('debugEmpty').style.display = 'none';
   }
 
-  if (!data.success) { showBanner('Detection failed: ' + data.error, 'error'); setTab('debug'); return; }
+  if (!data.success) {
+    showBanner('Detection failed: ' + data.error, 'error');
+    setTab('debug');
+    return;
+  }
 
   if (data.preview_image) {
-    const img = document.getElementById('previewImg');
-    img.src = data.preview_image; img.style.display = 'block';
-    document.getElementById('previewEmpty').style.display = 'none';
+    var pi = document.getElementById('previewImg');
+    pi.onload = function() { imgDisplayW = pi.offsetWidth; imgDisplayH = pi.offsetHeight; setupCropCanvas(); };
+    pi.src = data.preview_image;
+    document.getElementById('cropContainer').style.display = 'inline-block';
+    document.getElementById('previewEmpty').style.display  = 'none';
+    imgW = data.img_w; imgH = data.img_h;
+    document.getElementById('reprocessBtn').disabled = false;
   }
+
   if (data.binary_image) {
-    const img = document.getElementById('binaryImg');
-    img.src = data.binary_image; img.style.display = 'block';
+    var bi = document.getElementById('binaryImg');
+    bi.src = data.binary_image; bi.style.display = 'block';
     document.getElementById('binaryEmpty').style.display = 'none';
   }
-  if (data.svg) {
-    svgOutput = data.svg;
-    const display = document.getElementById('svgDisplay');
-    display.innerHTML = data.svg; display.style.display = 'block';
-    document.getElementById('svgEmpty').style.display = 'none';
-    const pathCount = (data.svg.match(/<path/g) || []).length;
+
+  if (data.svg && data.paths) {
+    allPaths     = data.paths;
+    deletedPaths = [];
+    imgW         = data.img_w;
+    imgH         = data.img_h;
+    physWMm      = data.width_mm;
+    physHMm      = data.height_mm;
+    svgZoom = 1.0; svgPanX = 0; svgPanY = 0;
+    renderSVG(data.svg, data.paths.length);
     document.getElementById('svgInfo').textContent =
-      `${pathCount} paths  |  ${data.width_mm}×${data.height_mm}mm  |  ${data.detect_mode} mode`;
+      data.paths.length + ' paths  |  ' + data.width_mm + ' x ' + data.height_mm + 'mm  |  ' + data.detect_mode + ' mode';
     document.getElementById('downloadBar').style.display = 'flex';
     setTab('svg');
   }
-  showBanner(`Done! Found ${data.markers_found.length}/4 markers — ${data.detect_mode} mode`, 'success');
+
+  showBanner('Done! ' + (data.markers_found ? data.markers_found.length : 0) + '/4 markers detected', 'success');
 }
 
+// ── SVG rendering ─────────────────────────────────────────────
+function renderSVG(svgStr, count) {
+  if (!svgStr || typeof svgStr !== 'string') {
+    showBanner('SVG render error', 'error'); return;
+  }
+  svgOutput = svgStr;
+
+  var parser = new DOMParser();
+  var doc    = parser.parseFromString(svgStr, 'image/svg+xml');
+  var svgEl  = doc.querySelector('svg');
+  if (!svgEl) { showBanner('SVG parse error', 'error'); return; }
+
+  svgEl.querySelectorAll('path').forEach(function(el, i) {
+    el.setAttribute('data-index', String(i));
+    el.style.cursor = measureMode ? 'crosshair' : 'pointer';
+  });
+
+  var display = document.getElementById('svgDisplay');
+  display.innerHTML = '';
+  display.appendChild(document.importNode(svgEl, true));
+
+  display.querySelectorAll('path').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+      if (measureMode) return;
+      deletePathByIndex(parseInt(this.getAttribute('data-index'), 10));
+    });
+  });
+
+  document.getElementById('svgToolbar').style.display = 'flex';
+  document.getElementById('svgEmpty').style.display   = 'none';
+  document.getElementById('svgDisplayWrap').style.display = 'block';
+
+  var badge = document.getElementById('pathCountBadge');
+  badge.textContent = count; badge.style.display = 'inline-block';
+  document.getElementById('svgPathInfo').textContent = count + ' paths';
+
+  applyZoom();
+  setTimeout(updateMeasureOverlay, 50);
+}
+
+function rebuildSVG() {
+  var scale  = parseFloat(document.getElementById('scaleInput').value) || 1.0;
+  var outWMm = physWMm > 0 ? (physWMm * scale).toFixed(4) + 'mm' : (imgW * scale).toFixed(2);
+  var outHMm = physHMm > 0 ? (physHMm * scale).toFixed(4) + 'mm' : (imgH * scale).toFixed(2);
+
+  var pathEls = allPaths.map(function(p, i) {
+    if (p.type === 'centerline') {
+      return '  <path id="p' + i + '" d="' + p.d + '" fill="none" stroke="black" stroke-width="1.5" stroke-linecap="round"/>';
+    } else {
+      return '  <path id="p' + i + '" d="' + p.d + '" fill="black" stroke="none"/>';
+    }
+  }).join('\n');
+
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + outWMm + '" height="' + outHMm +
+            '" viewBox="0 0 ' + imgW + ' ' + imgH + '">\n  <g>\n' + pathEls + '\n  </g>\n</svg>';
+
+  svgOutput = svg;
+  renderSVG(svg, allPaths.length);
+  document.getElementById('svgInfo').textContent =
+    allPaths.length + ' paths  |  ' + (physWMm * scale).toFixed(1) + ' x ' + (physHMm * scale).toFixed(1) + 'mm';
+}
+
+// ── Path deletion ─────────────────────────────────────────────
+function deletePathByIndex(idx) {
+  if (measureMode) { showBanner('Exit measure mode before deleting paths', 'info'); return; }
+  if (idx < 0 || idx >= allPaths.length) return;
+  hideBanner();
+  deletedPaths.push({index:idx, path:allPaths[idx]});
+  allPaths.splice(idx, 1);
+  showBanner('Path deleted — ' + allPaths.length + ' remaining  |  Undo to restore', 'info');
+  rebuildSVG();
+}
+
+function undoDelete() {
+  if (!deletedPaths.length) { showBanner('Nothing to undo', 'info'); return; }
+  var entry = deletedPaths.pop();
+  allPaths.splice(entry.index, 0, entry.path);
+  rebuildSVG();
+}
+
+function clearAllPaths() {
+  if (!confirm('Remove all paths? This cannot be undone.')) return;
+  deletedPaths = []; allPaths = [];
+  rebuildSVG();
+}
+
+// ── Zoom & pan ────────────────────────────────────────────────
+function applyZoom() {
+  var vp = document.getElementById('svgViewport');
+  if (!vp) return;
+  vp.style.transform = 'translate(' + svgPanX + 'px,' + svgPanY + 'px) scale(' + svgZoom + ')';
+  document.getElementById('zoomLabel').textContent = Math.round(svgZoom * 100) + '%';
+  setTimeout(updateMeasureOverlay, 10);
+}
+
+function adjustZoom(factor) {
+  var wrap    = document.getElementById('svgDisplayWrap');
+  var oldZoom = svgZoom;
+  svgZoom     = Math.min(Math.max(svgZoom * factor, 0.1), 12);
+  var cx = wrap.offsetWidth  / 2;
+  var cy = wrap.offsetHeight / 2;
+  svgPanX = cx - (cx - svgPanX) * (svgZoom / oldZoom);
+  svgPanY = cy - (cy - svgPanY) * (svgZoom / oldZoom);
+  applyZoom();
+}
+
+function resetZoom() {
+  svgZoom = 1.0; svgPanX = 0; svgPanY = 0; applyZoom();
+}
+
+document.getElementById('svgDisplayWrap').addEventListener('wheel', function(e) {
+  e.preventDefault();
+  var rect    = this.getBoundingClientRect();
+  var mx      = e.clientX - rect.left;
+  var my      = e.clientY - rect.top;
+  var factor  = e.deltaY < 0 ? 1.12 : 0.89;
+  var oldZoom = svgZoom;
+  svgZoom     = Math.min(Math.max(svgZoom * factor, 0.1), 12);
+  svgPanX     = mx - (mx - svgPanX) * (svgZoom / oldZoom);
+  svgPanY     = my - (my - svgPanY) * (svgZoom / oldZoom);
+  applyZoom();
+}, {passive:false});
+
+document.getElementById('svgDisplayWrap').addEventListener('mousedown', function(e) {
+  if (e.button === 1 || e.button === 2) {
+    e.preventDefault();
+    isPanning = true;
+    panStartX = e.clientX - svgPanX;
+    panStartY = e.clientY - svgPanY;
+  }
+});
+document.addEventListener('mousemove', function(e) {
+  if (!isPanning) return;
+  svgPanX = e.clientX - panStartX;
+  svgPanY = e.clientY - panStartY;
+  applyZoom();
+});
+document.addEventListener('mouseup', function(e) {
+  if (e.button === 1 || e.button === 2) isPanning = false;
+});
+document.getElementById('svgDisplayWrap').addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+// ── Measure tool ──────────────────────────────────────────────
+function toggleMeasureMode() {
+  measureMode = !measureMode;
+  var btn = document.getElementById('measureToggleBtn');
+  var bar = document.getElementById('measureBar');
+  var hint = document.getElementById('svgModeHint');
+  if (measureMode) {
+    btn.classList.add('measure-active');
+    bar.classList.add('show');
+    hint.textContent = 'Measure active';
+    document.getElementById('svgDisplay').style.cursor = 'crosshair';
+    clearMeasure();
+  } else {
+    btn.classList.remove('measure-active');
+    bar.classList.remove('show');
+    hint.textContent = 'Click a path to delete';
+    document.getElementById('svgDisplay').style.cursor = '';
+    clearMeasure();
+  }
+}
+
+function clearMeasure() {
+  measurePoints = [];
+  updateMeasureOverlay();
+  document.getElementById('measureResult').textContent  = '—';
+  document.getElementById('measureResult').className    = '';
+  document.getElementById('autoscaleBtn').style.display = 'none';
+  document.getElementById('measureHint').textContent    = 'Click point 1, then point 2';
+}
+
+document.getElementById('svgDisplay').addEventListener('click', function(e) {
+  if (!measureMode) return;
+  var svgEl = this.querySelector('svg');
+  if (!svgEl) return;
+
+  var pt   = svgEl.createSVGPoint();
+  pt.x = e.clientX; pt.y = e.clientY;
+  var svgPt = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+  measurePoints.push({x:svgPt.x, y:svgPt.y});
+  if (measurePoints.length > 2) measurePoints = measurePoints.slice(-2);
+
+  updateMeasureOverlay();
+
+  if (measurePoints.length === 2) {
+    var dx = measurePoints[1].x - measurePoints[0].x;
+    var dy = measurePoints[1].y - measurePoints[0].y;
+    var distPx = Math.sqrt(dx*dx + dy*dy);
+
+    var mmPerPx  = 0;
+    var svgWAttr = svgEl.getAttribute('width');
+    var vb       = svgEl.getAttribute('viewBox');
+    if (svgWAttr && vb && svgWAttr.indexOf('mm') !== -1) {
+      mmPerPx = parseFloat(svgWAttr) / parseFloat(vb.split(' ')[2]);
+    }
+
+    var distMm = mmPerPx > 0 ? (distPx * mmPerPx).toFixed(2) : null;
+    var distIn = distMm ? (parseFloat(distMm) / 25.4).toFixed(3) : null;
+    var r = document.getElementById('measureResult');
+    if (distMm) {
+      r.textContent = distMm + ' mm  (' + distIn + '")';
+      r.className = 'has-value';
+    } else {
+      r.textContent = distPx.toFixed(1) + ' px';
+    }
+    document.getElementById('autoscaleBtn').style.display = 'inline-flex';
+    document.getElementById('measureHint').textContent = 'Measurement ready — click Autoscale to calibrate';
+  }
+});
+
+function updateMeasureOverlay() {
+  var svgEl   = document.querySelector('#svgDisplay svg');
+  var overlay = document.getElementById('svgMeasureOverlay');
+  if (!svgEl || !overlay) return;
+
+  overlay.style.left   = svgEl.offsetLeft + 'px';
+  overlay.style.top    = svgEl.offsetTop  + 'px';
+  overlay.setAttribute('width',  svgEl.offsetWidth);
+  overlay.setAttribute('height', svgEl.offsetHeight);
+  overlay.innerHTML = '';
+  if (measurePoints.length === 0) return;
+
+  var ctm = svgEl.getScreenCTM();
+  if (!ctm) return;
+  var svgRect = svgEl.getBoundingClientRect();
+
+  function toOv(sx, sy) {
+    var pt = svgEl.createSVGPoint();
+    pt.x = sx; pt.y = sy;
+    var sc = pt.matrixTransform(ctm);
+    return { x: sc.x - svgRect.left, y: sc.y - svgRect.top };
+  }
+
+  var ns = 'http://www.w3.org/2000/svg';
+  measurePoints.forEach(function(p, i) {
+    var o = toOv(p.x, p.y);
+    var color = i === 0 ? '#4f8ef7' : '#27ae60';
+    ['x','y'].forEach(function(axis) {
+      var line = document.createElementNS(ns, 'line');
+      if (axis === 'x') { line.setAttribute('x1', o.x-9); line.setAttribute('y1', o.y); line.setAttribute('x2', o.x+9); line.setAttribute('y2', o.y); }
+      else              { line.setAttribute('x1', o.x);   line.setAttribute('y1', o.y-9); line.setAttribute('x2', o.x);   line.setAttribute('y2', o.y+9); }
+      line.setAttribute('stroke', color); line.setAttribute('stroke-width', '1.5');
+      overlay.appendChild(line);
+    });
+    var dot = document.createElementNS(ns, 'circle');
+    dot.setAttribute('cx', o.x); dot.setAttribute('cy', o.y); dot.setAttribute('r', 4);
+    dot.setAttribute('fill', color);
+    overlay.appendChild(dot);
+  });
+
+  if (measurePoints.length === 2) {
+    var a = toOv(measurePoints[0].x, measurePoints[0].y);
+    var b = toOv(measurePoints[1].x, measurePoints[1].y);
+    var line = document.createElementNS(ns, 'line');
+    line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+    line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+    line.setAttribute('stroke', '#8e44ad'); line.setAttribute('stroke-width', '1.5');
+    line.setAttribute('stroke-dasharray', '5,3');
+    overlay.appendChild(line);
+
+    var mx = (a.x + b.x) / 2;
+    var my = (a.y + b.y) / 2;
+    var label = document.getElementById('measureResult').textContent;
+    var bg = document.createElementNS(ns, 'rect');
+    bg.setAttribute('x', mx-54); bg.setAttribute('y', my-12);
+    bg.setAttribute('width', 108); bg.setAttribute('height', 20);
+    bg.setAttribute('rx', 4); bg.setAttribute('fill', 'rgba(142,68,173,0.88)');
+    overlay.appendChild(bg);
+    var txt = document.createElementNS(ns, 'text');
+    txt.setAttribute('x', mx); txt.setAttribute('y', my+3);
+    txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('fill', 'white');
+    txt.setAttribute('font-size', '11'); txt.setAttribute('font-family', 'monospace');
+    txt.setAttribute('font-weight', 'bold');
+    txt.textContent = label;
+    overlay.appendChild(txt);
+  }
+}
+
+// ── Autoscale ─────────────────────────────────────────────────
+function promptAutoscale() {
+  if (measurePoints.length < 2) { showBanner('Place two points first', 'info'); return; }
+
+  var dx = measurePoints[1].x - measurePoints[0].x;
+  var dy = measurePoints[1].y - measurePoints[0].y;
+  var distPx = Math.sqrt(dx*dx + dy*dy);
+
+  var svgEl    = document.querySelector('#svgDisplay svg');
+  var svgWAttr = svgEl ? svgEl.getAttribute('width') : null;
+  var vb       = svgEl ? svgEl.getAttribute('viewBox') : null;
+  var mmPerPx  = 0;
+  if (svgWAttr && vb && svgWAttr.indexOf('mm') !== -1) {
+    mmPerPx = parseFloat(svgWAttr) / parseFloat(vb.split(' ')[2]);
+  }
+  var currentMm = mmPerPx > 0 ? (distPx * mmPerPx).toFixed(2) : null;
+  var hint = currentMm ? 'Currently reads ' + currentMm + 'mm. Enter true distance:' : 'Enter true distance:';
+  var input = prompt(hint + '\n\nExamples: "50mm"  "2in"  "2\\"  "25.4"  (bare number = mm)');
+  if (!input || input.trim() === '') return;
+
+  var knownMm = parseDistToMm(input.trim());
+  if (!knownMm || knownMm <= 0) { showBanner('Could not parse distance. Try "50mm" or "2in".', 'error'); return; }
+  if (!mmPerPx)                  { showBanner('Process an image first so physical dimensions are known.', 'error'); return; }
+
+  var currentDistMm = distPx * mmPerPx;
+  var factor        = knownMm / currentDistMm;
+  var currentScale  = parseFloat(document.getElementById('scaleInput').value) || 1.0;
+  var newScale      = currentScale * factor;
+
+  document.getElementById('scaleInput').value = newScale.toFixed(4);
+  physWMm = physWMm * factor;
+  physHMm = physHMm * factor;
+
+  rebuildSVG();
+  clearMeasure();
+  showBanner(
+    'Autoscaled to ' + knownMm.toFixed(2) + 'mm (' + (knownMm/25.4).toFixed(3) + '"). ' +
+    'Scale = ' + newScale.toFixed(4) + '. Measure again to verify.',
+    'success'
+  );
+}
+
+function parseDistToMm(s) {
+  s = s.toLowerCase().replace(/\s/g, '');
+  var inMatch = s.match(/^([\d.]+)(in|inch|inches|")$/);
+  var mmMatch = s.match(/^([\d.]+)(mm)?$/);
+  if (inMatch) return parseFloat(inMatch[1]) * 25.4;
+  if (mmMatch) return parseFloat(mmMatch[1]);
+  return null;
+}
+
+// ── Crop canvas ───────────────────────────────────────────────
+function setupCropCanvas() {
+  var img    = document.getElementById('previewImg');
+  var canvas = document.getElementById('cropCanvas');
+  imgDisplayW = img.offsetWidth; imgDisplayH = img.offsetHeight;
+  canvas.width = imgDisplayW; canvas.height = imgDisplayH;
+  drawCropCanvas();
+}
+
+function drawCropCanvas() {
+  var canvas = document.getElementById('cropCanvas');
+  if (!canvas.width) return;
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!cropRect) return;
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+  ctx.strokeStyle = '#4f8ef7'; ctx.lineWidth = 2;
+  ctx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+  var hs = 8;
+  ctx.fillStyle = '#4f8ef7';
+  [[cropRect.x,cropRect.y],[cropRect.x+cropRect.w,cropRect.y],
+   [cropRect.x,cropRect.y+cropRect.h],[cropRect.x+cropRect.w,cropRect.y+cropRect.h]]
+  .forEach(function(p) { ctx.fillRect(p[0]-hs/2, p[1]-hs/2, hs, hs); });
+}
+
+var cropCanvas = document.getElementById('cropCanvas');
+cropCanvas.addEventListener('mousedown', function(e) {
+  var r = cropCanvas.getBoundingClientRect();
+  cropStartX = e.clientX - r.left; cropStartY = e.clientY - r.top;
+  cropDragging = true;
+});
+cropCanvas.addEventListener('mousemove', function(e) {
+  if (!cropDragging) return;
+  var r  = cropCanvas.getBoundingClientRect();
+  var cx = e.clientX - r.left, cy = e.clientY - r.top;
+  cropRect = { x:Math.min(cropStartX,cx), y:Math.min(cropStartY,cy), w:Math.abs(cx-cropStartX), h:Math.abs(cy-cropStartY) };
+  drawCropCanvas();
+});
+cropCanvas.addEventListener('mouseup',    function() { cropDragging = false; });
+cropCanvas.addEventListener('mouseleave', function() { cropDragging = false; });
+window.addEventListener('resize', function() { if (document.getElementById('previewImg').src) setupCropCanvas(); });
+
+// ── Download ──────────────────────────────────────────────────
 function downloadSVG() {
   if (!svgOutput) return;
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([svgOutput], { type: 'image/svg+xml' }));
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([svgOutput], {type:'image/svg+xml'}));
   a.download = 'opentrace.svg'; a.click();
 }
+
 function copySVG() {
   if (!svgOutput) return;
   navigator.clipboard.writeText(svgOutput)
-    .then(() => showBanner('SVG copied to clipboard!', 'success'))
-    .catch(() => showBanner('Copy failed', 'error'));
+    .then(function()  { showBanner('SVG copied!', 'success'); })
+    .catch(function() { showBanner('Copy failed', 'error'); });
 }
 
-function setTab(name) {
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', ['debug','preview','binary','svg'][i] === name);
-  });
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById(name + 'Panel').classList.add('active');
+// ── Banner ────────────────────────────────────────────────────
+function showBanner(msg, type) {
+  var b = document.getElementById('banner');
+  b.textContent = msg; b.className = 'banner ' + type;
 }
-function showBanner(msg, type) { const b = document.getElementById('banner'); b.textContent = msg; b.className = 'banner ' + type; }
 function hideBanner() { document.getElementById('banner').className = 'banner'; }
 
-fetch('/api/health').catch(() => {
+// ── Health check ──────────────────────────────────────────────
+fetch('/api/health').catch(function() {
   document.getElementById('serverStatus').textContent = '○ Offline';
   document.getElementById('serverStatus').style.color = 'var(--warn)';
 });
