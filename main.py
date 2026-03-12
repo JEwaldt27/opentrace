@@ -2,6 +2,7 @@
 main.py  —  OpenTrace local server
 """
 
+import sys
 import cv2
 import numpy as np
 from fastapi import FastAPI, File, UploadFile, Form
@@ -16,9 +17,11 @@ from core.vectorize import (
     paths_to_svg, img_to_base64, binary_to_base64, VectorMode
 )
 
+# When frozen by PyInstaller, files are extracted to sys._MEIPASS
+BASE_DIR = Path(sys._MEIPASS) if getattr(sys, 'frozen', False) else Path(__file__).parent
+
 app = FastAPI(title="OpenTrace", version="0.2.1")
-app.mount("/static", StaticFiles(directory="static"), name="static")
-BASE_DIR = Path(__file__).parent
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -123,3 +126,11 @@ async def rebuild_svg(
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "version": "0.2.1"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    import webbrowser
+    import threading
+    threading.Timer(1.5, lambda: webbrowser.open("http://127.0.0.1:8000")).start()
+    uvicorn.run(app, host="127.0.0.1", port=8000)

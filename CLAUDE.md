@@ -15,6 +15,16 @@ pip install -r requirements.txt
 
 There are no tests. There is no linter configuration.
 
+## Building the EXE
+
+`build.bat` produces a standalone `dist\OpenTrace\` folder using PyInstaller (`--onedir`). Run it from the project root — it installs PyInstaller automatically, builds, then cleans up the `build\` folder and `.spec` file. The whole `dist\OpenTrace\` folder must be distributed together (zip it to share).
+
+Key PyInstaller considerations:
+- `--collect-all cv2` is required to bundle all OpenCV DLLs and data files
+- Several `--hidden-import uvicorn.*` flags are needed because PyInstaller misses uvicorn's dynamic imports
+- `main.py` uses `sys._MEIPASS` to resolve `BASE_DIR` and the `StaticFiles` mount path when frozen — do not change these to relative paths
+- `main.py` has a `__main__` block that calls `uvicorn.run()` directly and auto-opens the browser, which is what the EXE uses as its entry point
+
 ## Architecture
 
 OpenTrace is a **local-only** FastAPI app — the Python backend serves both the API and the single-page frontend (`static/index.html`). All processing happens server-side; the browser never touches OpenCV.

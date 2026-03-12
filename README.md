@@ -23,12 +23,21 @@ Open source sketch-to-SVG tool — a free alternative to Shaper Trace.
 5. Click **Process Image**
 6. Download your SVG from the bottom bar
 
+## Building the EXE
+
+To produce a standalone `dist\OpenTrace\` folder that requires no Python install:
+
+1. Run `build.bat` (or paste the pyinstaller command from it into a terminal)
+2. Output lands in `dist\OpenTrace\OpenTrace.exe`
+3. Zip the entire `dist\OpenTrace\` folder to share it
+
 ## Project Structure
 
 ```
 opentrace/
 ├── main.py              # FastAPI server
-├── launch.bat           # Windows launcher
+├── launch.bat           # Run from source (Windows)
+├── build.bat            # PyInstaller build script
 ├── requirements.txt     # Python dependencies
 ├── core/
 │   ├── detect.py        # ArUco detection + perspective correction
