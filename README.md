@@ -4,15 +4,18 @@ Open source sketch-to-SVG tool — a free alternative to Shaper Trace.
 
 ## Requirements
 
-- Windows 10/11
-- Python 3.10 or newer → https://www.python.org/downloads/
-  - ✅ Check "Add Python to PATH" during install
+- Ubuntu 20.04 or newer
+- Python 3.10 or newer (`sudo apt install python3 python3-venv python3-pip`)
+- A Cloudflare tunnel pointed at `http://127.0.0.1:8000`
 
 ## Quick Start
 
-1. Double-click `launch.bat`
-2. First run will install dependencies automatically
-3. Browser opens to http://localhost:8000
+1. Clone the repo and `cd` into it
+2. Run `chmod +x install.sh && ./install.sh`
+3. Edit `opentrace.service` — replace `YOUR_USER` and the `WorkingDirectory`/`ExecStart` paths with your actual username and install path
+4. `sudo cp opentrace.service /etc/systemd/system/`
+5. `sudo systemctl enable --now opentrace`
+6. Point your cloudflared tunnel at `http://127.0.0.1:8000`
 
 ## Usage
 
@@ -28,7 +31,8 @@ Open source sketch-to-SVG tool — a free alternative to Shaper Trace.
 ```
 opentrace/
 ├── main.py              # FastAPI server
-├── launch.bat           # Windows launcher
+├── install.sh           # One-time setup (venv + deps)
+├── opentrace.service    # systemd unit file
 ├── requirements.txt     # Python dependencies
 ├── core/
 │   ├── detect.py        # ArUco detection + perspective correction
