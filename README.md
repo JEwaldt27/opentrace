@@ -78,6 +78,7 @@ opentrace/
 
 ### v0.2.2
 - Added PyInstaller EXE build — run `build.bat` to produce a standalone `dist\OpenTrace\` folder requiring no Python install. Browser opens automatically on launch.
+- Added logo to page header and browser tab favicon
 
 ### v0.2.1
 - Fixed SVG `width`/`height` attributes to use real mm dimensions instead of pixels — SVGs now import at correct physical size in Inkscape and laser software
