@@ -20,7 +20,7 @@ from core.vectorize import (
 # When frozen by PyInstaller, files are extracted to sys._MEIPASS
 BASE_DIR = Path(sys._MEIPASS) if getattr(sys, 'frozen', False) else Path(__file__).parent
 
-app = FastAPI(title="OpenTrace", version="0.2.1")
+app = FastAPI(title="OpenTrace", version="0.2.2")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
@@ -125,7 +125,7 @@ async def rebuild_svg(
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "0.2.1"}
+    return {"status": "ok", "version": "0.2.2"}
 
 
 if __name__ == "__main__":
