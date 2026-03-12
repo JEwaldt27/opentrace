@@ -158,7 +158,7 @@
 <body>
 
 <header>
-  <div><div class="logo">Open<span>Trace</span></div><div class="version">v0.2.0 — Sketch to SVG</div></div>
+  <div><div class="logo">Open<span>Trace</span></div><div class="version">v0.2.1 — Sketch to SVG</div></div>
   <div class="spacer"></div>
   <div class="status-pill" id="serverStatus">● Connected</div>
 </header>
@@ -169,11 +169,11 @@
     <div class="sidebar-section">
       <h3>Marker Mode</h3>
       <div class="mode-cards">
-        <div class="mode-card active" id="cardFrame" onclick="setDetectMode('frame')">
+        <div class="mode-card" id="cardFrame" style="opacity:0.4;cursor:not-allowed;pointer-events:none;">
           <div class="icon">🖨️</div><div class="name">3D Frame</div>
           <div class="desc">Physical printed frame with ArUco pads</div>
         </div>
-        <div class="mode-card" id="cardPaper" onclick="setDetectMode('paper')">
+        <div class="mode-card active" id="cardPaper" onclick="setDetectMode('paper')">
           <div class="icon">📄</div><div class="name">Paper Sheet</div>
           <div class="desc">Printed marker sheet, sketch on top</div>
         </div>
@@ -370,7 +370,7 @@
 <script>
 // ── State ─────────────────────────────────────────────────────
 var currentVecMode = 'outline';
-var detectMode     = 'frame';
+var detectMode     = 'paper';
 var inputMode      = 'camera';
 var capturedFile   = null;
 var svgOutput      = null;

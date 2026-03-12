@@ -73,3 +73,4 @@ opentrace/
 - Added **⇲ Autoscale** — place two measure points on a known reference line in your sketch, enter the true distance, and the SVG rescales automatically. Accepts `1in`, `25.4mm`, or bare numbers (mm assumed)
 - Added **zoom and pan** in the SVG tab — scroll wheel to zoom toward cursor, `+`/`−`/reset buttons in the corner, middle-mouse drag to pan
 - Path deletion is now blocked while measure mode is active to prevent accidental deletes
+- Frame mode temporarily disabled — Paper Sheet mode only for now while the physical frame is still in development

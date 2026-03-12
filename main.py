@@ -16,7 +16,7 @@ from core.vectorize import (
     paths_to_svg, img_to_base64, binary_to_base64, VectorMode
 )
 
-app = FastAPI(title="OpenTrace", version="0.2.0")
+app = FastAPI(title="OpenTrace", version="0.2.1")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 BASE_DIR = Path(__file__).parent
 
@@ -122,4 +122,4 @@ async def rebuild_svg(
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "0.2.0"}
+    return {"status": "ok", "version": "0.2.1"}
